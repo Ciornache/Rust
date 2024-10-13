@@ -1,6 +1,6 @@
 fn main() {
-    // test_problem_1();
-    // test_problem_2();
+    test_problem_1();
+    test_problem_2();
     solve_problem_3();
 }
 
