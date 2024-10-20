@@ -1,5 +1,7 @@
 fn main() {
 
+    // For problem 5 I designed a mini calculator app. The Calculator can only return i64 numbers back
+
     for i in 65500..65535 {
         match next_prime(i) {
             Some(prime) => println!("The next prime number after {} is {}", i, prime),
@@ -15,6 +17,16 @@ fn main() {
     match checked_multiplication_with_result(1000000, 425235) {
         Ok(result) => println!("Checked multiplication result: {}", result),
         Err(_) => println!("Overflow occurred in multiplication"),
+    }
+
+    match propagate_errors_by_result_functions(4324, 52352) {
+        Ok(result) => println!("Addition and multiplication: {}, {}", result.0, result.1),
+        Err(_) => println!("Overflow occurent in either addition or multiplication"),
+    }
+
+    match propagate_errors_by_result_functions(45435324, 52352) {
+        Ok(result) => println!("Addition and multiplication: {}, {}", result.0, result.1),
+        Err(_) => println!("Overflow occured in either addition or multiplication"),
     }
 
     let uppercase_result = to_uppercase('a');
@@ -148,7 +160,14 @@ fn checked_addition_with_result(a:u32, b:u32) -> Result<u32, MyError>
     }
     else {
         Err(MyError::Overflow)
-    }       
+    }        
+}
+
+fn propagate_errors_by_result_functions(a:u32, b:u32) -> Result<(u32, u32), MyError> {
+    let result1  = checked_addition_with_result(a, b)?;
+    let result2  = checked_multiplication_with_result(a, b)?;
+
+    Ok((result1, result2))
 }
 
 enum CharacterError {
