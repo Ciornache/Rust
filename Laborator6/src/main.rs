@@ -51,8 +51,8 @@ impl BkCommand {
                 url text not null
             );
             ";
-            conn.execute(create, ());
-            conn.close();
+            let _ = conn.execute(create, ());
+            let _ = conn.close();
         }
     }
 
@@ -61,11 +61,11 @@ impl BkCommand {
         let url = bookmark.1;
         println!("Terminal: Inserting {} {}", name, url);
         if let Ok(conn) = Connection::open("bookmarks.db") {
-            conn.execute(
+            let _ = conn.execute(
                 "insert into bookmarks (name, url) values (?1, ?2);",
                 (name, url),
             );
-            conn.close();
+            let _ = conn.close();
         }
     }
 
@@ -100,11 +100,9 @@ impl BkCommand {
                     }
                 }
             }
-            conn.close();
+            let _ = conn.close();
         }
     }
-
-
 }
 
 impl AbstractCommand for PingCommand {
@@ -178,7 +176,7 @@ impl Terminal {
     }
 
     fn run(&mut self) -> Result<(), MyError> {
-        let s = fs::read_to_string("src/file.txt").ok().unwrap();
+        let s = fs::read_to_string("file.txt").ok().unwrap();
         'outer: for line in s.lines() {
             let mut it = line.split_whitespace();
             if let Some(command) = it.next() {
@@ -224,10 +222,10 @@ impl Terminal {
 fn main() {
     let mut terminal = Terminal::new();
 
-    terminal.register(Box::new(PingCommand {}));
-    terminal.register(Box::new(CountCommand {}));
-    terminal.register(Box::new(TimesCommand { count: 0 }));
-    terminal.register(Box::new(HelpCommand {}));
-    terminal.register(Box::new(BkCommand {}));
-    terminal.run();
+    let _ = terminal.register(Box::new(PingCommand {}));
+    let _ = terminal.register(Box::new(CountCommand {}));
+    let _ = terminal.register(Box::new(TimesCommand { count: 0 }));
+    let _ = terminal.register(Box::new(HelpCommand {}));
+    let _ = terminal.register(Box::new(BkCommand {}));
+    let _ = terminal.run();
 }
