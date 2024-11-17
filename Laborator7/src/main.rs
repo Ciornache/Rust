@@ -1,4 +1,4 @@
-use std::{fmt::{self, Debug, Display, Formatter}, ops::{Add, Mul, Neg, Sub}};
+use std::{fmt::{self, Debug, Display, Formatter}, ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign}};
 
 fn eq_rel(x: f64, y: f64) -> bool {
     (x - y).abs() < 0.001
@@ -36,6 +36,10 @@ impl Complex {
             real: self.real, 
             imag: -self.imag,
         }
+    }
+
+    fn module(self: &Self) -> f64 {
+        f64::sqrt(self.real * self.real + self.imag * self.imag)
     }
 }
 
@@ -93,6 +97,36 @@ impl Neg for Complex  {
     }
 }
 
+impl<T> AddAssign<T> for Complex
+where T: Into<Complex>
+{
+    fn add_assign(&mut self, rhs: T) {
+        let other:Complex = rhs.into();
+        self.real = self.real - other.real;
+        self.imag = self.imag - other.imag;
+    }
+} 
+impl<T> MulAssign<T> for Complex
+where T: Into<Complex>
+{
+    fn mul_assign(&mut self, rhs: T) {
+        let other:Complex = rhs.into();
+        self.real = self.real - other.real;
+        self.imag = self.imag - other.imag;
+    }
+} 
+
+
+impl<T> SubAssign<T> for Complex
+where T: Into<Complex>
+{
+    fn sub_assign(&mut self, rhs: T) {
+        let other:Complex = rhs.into();
+        self.real = self.real * other.real - self.imag * other.imag;
+        self.imag = self.real * other.imag + self.imag * other.real;
+    }
+} 
+
 impl<T> Sub<T> for Complex 
 where T:Into<Complex>
 {
@@ -135,6 +169,8 @@ impl PartialEq for Complex
     }
 }
 
+
+
 fn main() {
     let a = Complex::new(1.0, 2.0);
     assert_eq_rel!(a.real, 1);
@@ -168,6 +204,9 @@ fn main() {
     let j = -i + i;
     assert_eq_rel!(j.real, 0);
     assert_eq_rel!(j.imag, 0);
+
+    let k = Complex::new(10, 10);
+    assert_eq_rel!(k.module(), f64::sqrt(200f64));
 
     println!("ok!");
 }
