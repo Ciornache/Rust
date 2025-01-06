@@ -32,7 +32,12 @@ pub fn run(_options: &[ResolvedOption]) -> String {
             }
         }
     }
-    let file_path = "F:/General Info/Anul II/Semestrul 1/Rust/Proiect_RustB_Discord_Bot/src/utility/episodes.json";
+
+    if id <= 0 || id > 1100 {
+        return String::from("Error: The episode_id must be between 1 and 1100");
+    }
+
+    let file_path = "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/episodes.json";
     let json = fs::read_to_string(file_path);
     let mut response: String = String::new();
     if let Ok(str_json) = json {
