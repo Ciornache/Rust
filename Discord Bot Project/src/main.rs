@@ -24,6 +24,8 @@ struct LastQuestion {
     question_id: Option<MessageId>,
     answer: String,
     answered: bool,
+    time: i32, 
+    question:String, 
 }
 
 struct Handler;
@@ -113,8 +115,20 @@ impl EventHandler for Handler {
         tokio::spawn(async move {
             let channel_id = ChannelId::new(1322554074775945320);
             loop {
-                let js_last_question = get_last_question().await;
-                if !js_last_question.answered {
+                let mut js_last_question = get_last_question().await;
+                if !js_last_question.answered
+                {
+                    if js_last_question.time == 5
+                    {
+                        let status = channel_id.say(&http, js_last_question.question.clone()).await;
+                        if let Ok(status) = status 
+                        {
+                            js_last_question.time = 0;
+                            js_last_question.question_id = Some(status.id);
+                            let _ = update_last_question(js_last_question).await;
+                        }
+                    }
+                    sleep(Duration::from_secs(1)).await;
                     continue;
                 }
                 let question_obj = get_question().await;
@@ -128,12 +142,14 @@ impl EventHandler for Handler {
                             answered: false,
                             answer: answer,
                             question_id: Some(id),
+                            time: 0i32,
+                            question:question, 
                         };
                         update_last_question(last_question).await;
                     } else if let Err(err) = status {
                         eprintln!("Error sending message: {:?}", err);
                     }
-                    sleep(Duration::from_secs(10)).await;
+                    sleep(Duration::from_secs(5)).await;
                 }
             }
         });
@@ -174,7 +190,11 @@ impl EventHandler for Handler {
                     }
                 }
             }
+            let mut js_last_question = get_last_question().await;
+            js_last_question.time = js_last_question.time + 1;
+            let _ = update_last_question(js_last_question).await;
         }
+        
     }
 }
 
