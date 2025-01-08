@@ -19,12 +19,12 @@ struct Data {
 }
 
 pub fn run(_options: &[ResolvedOption]) -> String {
-    let mut id: i32 = 0i32;
+    let mut text: String = String::new();
     for option in _options.iter() {
-        if option.name == "id" {
+        if option.name == "text" {
             match option.value {
-                ResolvedValue::Integer(option_value) => {
-                    id = option_value as i32;
+                ResolvedValue::String(option_value) => {
+                    text = String::from(option_value);
                 }
                 _ => {
                     println!("Eroare: Argumentul dat ca parametru nu este String!\n");
@@ -33,22 +33,20 @@ pub fn run(_options: &[ResolvedOption]) -> String {
         }
     }
 
-    if id <= 0 || id > 1100 {
-        return String::from("Error: The episode_id must be between 1 and 1100");
-    }
-
-    let file_path = "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/episodes.json";
+    let file_path =
+        "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/episodes.json";
     let json = fs::read_to_string(file_path);
     let mut response: String = String::new();
     if let Ok(str_json) = json {
         let episode_list: Data = serde_json::from_str(&str_json).unwrap();
         for episode in episode_list.data.iter() {
-            if episode.mal_id == id {
+            if episode.title.to_ascii_lowercase().contains(text.to_ascii_lowercase().as_str()) 
+            {
                 let episode_score = episode.score.unwrap_or(0f32);
                 let aired_date = episode.aired.get(0..10).unwrap_or("Unknown");
                 response.push_str(
                     format!(
-                        "Episode Number: {} \nTitle: {} \nScore: {}/5\nAired: {}\nFiller episode: {}\n",
+                        "Episode Number: {} \nTitle: {} \nScore: {}/5\nAired: {}\nFiller episode: {}\n\n@",
                         episode.mal_id, episode.title, episode_score, aired_date, episode.filler
                     )
                     .as_str(),
@@ -56,16 +54,19 @@ pub fn run(_options: &[ResolvedOption]) -> String {
             }
         }
     }
+    if response.is_empty() {
+        response.push_str(format!("No episodes with the given text {} matched", text).as_str());
+    }
     String::from(response)
 }
 
 pub fn register() -> CreateCommand {
     CreateCommand::new("episode")
-        .description("Prints information for the episodes that match the argument given")
+        .description("Prints information for the episodes that match the given argument")
         .add_option(
             CreateCommandOption::new(
-                CommandOptionType::Integer,
-                "id",
+                CommandOptionType::String,
+                "text",
                 "Matching will be based on the argument text",
             )
             .required(true),

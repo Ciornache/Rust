@@ -10,6 +10,7 @@ use rusqlite::{params, Connection, Result};
 use serenity::all::CreateEmbed;
 use serenity::all::Message;
 use serenity::all::MessageId;
+use serenity::all::CreateInteractionResponseFollowup;
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::Interaction;
@@ -78,10 +79,30 @@ impl EventHandler for Handler {
                 }
             } else {
                 if let Some(content) = content {
-                    let data = CreateInteractionResponseMessage::new().content(content);
+                    let data = CreateInteractionResponseMessage::new().content("Processing the request...\n");
                     let builder = CreateInteractionResponse::Message(data);
                     if let Err(why) = command.create_response(&ctx.http, builder).await {
                         println!("Cannot respond to slash command: {why}");
+                    }
+                    let mut response = String::new();
+                    let mut word_count = 0;
+                    for mess in content.split("@") {
+                        word_count = word_count + 1;
+                        response.push_str(mess);
+                        if word_count == 5 {
+                            let data = CreateInteractionResponseFollowup::new().content(response.clone());
+                            if let Err(why) = command.create_followup(&ctx.http, data).await {
+                                println!("Cannot respond to slash command: {why}");
+                            }
+                            word_count = 0;
+                            response.clear();
+                        }
+                    }
+                    if word_count > 0  {
+                        let data = CreateInteractionResponseFollowup::new().content(response.clone());
+                        if let Err(why) = command.create_followup(&ctx.http, data).await {
+                            println!("Cannot respond to slash command: {why}");
+                        }
                     }
                 }
             }
@@ -118,7 +139,7 @@ impl EventHandler for Handler {
                 let mut js_last_question = get_last_question().await;
                 if !js_last_question.answered
                 {
-                    if js_last_question.time == 5
+                    if js_last_question.time == 7
                     {
                         let status = channel_id.say(&http, js_last_question.question.clone()).await;
                         if let Ok(status) = status 
@@ -190,10 +211,10 @@ impl EventHandler for Handler {
                     }
                 }
             }
-            let mut js_last_question = get_last_question().await;
-            js_last_question.time = js_last_question.time + 1;
-            let _ = update_last_question(js_last_question).await;
         }
+        let mut js_last_question = get_last_question().await;
+        js_last_question.time = js_last_question.time + 1;
+        let _ = update_last_question(js_last_question).await;
         
     }
 }
