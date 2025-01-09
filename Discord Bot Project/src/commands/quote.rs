@@ -6,6 +6,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fs;
 
+use crate::utility;
+
 #[derive(Deserialize)]
 struct Quote {
     author: String,
@@ -25,7 +27,7 @@ impl fmt::Display for Quote {
 
 pub fn run(_options: &[ResolvedOption]) -> String {
     let file_path =
-        "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/quotes.json";
+        utility::path::QUOTES_PATH;
     let content = fs::read_to_string(file_path).unwrap();
     let quotes: HashMap<String, Quote> = serde_json::from_str(&content).unwrap();
     let length = quotes.len();

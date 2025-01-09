@@ -1,12 +1,13 @@
 mod commands;
 mod utility;
+mod database;
 
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
+use utility::path;
 use std::env;
 
 use rand::Rng;
-use rusqlite::{params, Connection, Result};
 use serenity::all::CreateEmbed;
 use serenity::all::Message;
 use serenity::all::MessageId;
@@ -19,6 +20,7 @@ use serenity::model::id::ChannelId;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 use tokio::time::{sleep, Duration};
+use database::{init_database, insert_user_into_database, update_user};
 
 #[derive(Deserialize, Serialize)]
 struct LastQuestion {
@@ -139,7 +141,7 @@ impl EventHandler for Handler {
                 let mut js_last_question = get_last_question().await;
                 if !js_last_question.answered
                 {
-                    if js_last_question.time == 7
+                    if js_last_question.time >= 7
                     {
                         let status = channel_id.say(&http, js_last_question.question.clone()).await;
                         if let Ok(status) = status 
@@ -220,7 +222,8 @@ impl EventHandler for Handler {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() 
+{
     dotenv().ok();
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let intents =
@@ -251,7 +254,7 @@ async fn get_question() -> Option<(String, String)> {
     // Retrieves one random question from the set of questions
 
     let path =
-        "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/questions.json";
+        path::QUESTIONS_PATH;
     let json = tokio::fs::read_to_string(path).await;
     if let Ok(content) = json {
         let data: Data = serde_json::from_str(content.as_str()).unwrap();
@@ -268,9 +271,8 @@ async fn get_question() -> Option<(String, String)> {
 
 async fn get_last_question() -> LastQuestion {
     // Deserializes the json and returns the last question asked as a LastQuestion object
-
     let json = tokio::fs::read_to_string(
-        "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/question.json",
+    path::QUESTION_PATH,
     ).await.unwrap();
     let last_question: LastQuestion = serde_json::from_str(json.as_str()).unwrap();
     return last_question;
@@ -278,50 +280,10 @@ async fn get_last_question() -> LastQuestion {
 
 async fn update_last_question(question: LastQuestion) {
     // Updates the json
-
     let json_data = serde_json::to_string(&question).unwrap();
     let _ = tokio::fs::write(
-        "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/question.json",
+        path::QUESTION_PATH,
         json_data,
     ).await;
 }
 
-async fn init_database() -> Result<(), rusqlite::Error> {
-    let conn = Connection::open("users.db")?;
-    let create_statement = r"
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            name TEXT NOT NULL UNIQUE, 
-            points INTEGER DEFAULT 0
-        );
-    ";
-    conn.execute(create_statement, [])?;
-    Ok(())
-}
-
-async fn insert_user_into_database(user_name: String) -> Result<(), rusqlite::Error> {
-    let conn = Connection::open("users.db")?;
-    let select_statement = "SELECT EXISTS(SELECT 1 FROM users WHERE name = ?1);";
-    let insert_statement = "INSERT INTO users (name, points) VALUES (?1, ?2);";
-    let mut stmt = conn.prepare(select_statement)?;
-    let exists: bool = stmt.query_row(params![user_name], |row| row.get(0))?;
-    if !exists {
-        conn.execute(insert_statement, params![user_name, 0])?;
-    }
-    Ok(())
-}
-
-async fn update_user(user_name: String, number_of_points: i32) -> Result<(), rusqlite::Error> {
-    let conn = Connection::open("users.db")?;
-    let update_statement = r"
-        UPDATE users
-        SET points = points + ?1
-        WHERE name = ?2;
-    ";
-    let rows_affected = conn.execute(update_statement, params![number_of_points, user_name])?;
-    if rows_affected == 0 {
-        Err(rusqlite::Error::QueryReturnedNoRows)
-    } else {
-        Ok(())
-    }
-}

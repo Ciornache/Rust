@@ -3,6 +3,8 @@ use serenity::all::{CommandOptionType, CreateCommandOption, ResolvedValue};
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
 use std::fs;
+use crate::utility;
+
 
 #[derive(Deserialize)]
 struct Episode {
@@ -26,15 +28,13 @@ pub fn run(_options: &[ResolvedOption]) -> String {
                 ResolvedValue::String(option_value) => {
                     text = String::from(option_value);
                 }
-                _ => {
-                    println!("Eroare: Argumentul dat ca parametru nu este String!\n");
-                }
+                _ => { println!("Eroare: Argumentul dat ca parametru nu este String!\n"); }
             }
         }
     }
 
     let file_path =
-        "F:/General Info/Anul II/Semestrul 1/Rust/Discord Bot Project/src/utility/episodes.json";
+        utility::path::EPISODES_PATH;
     let json = fs::read_to_string(file_path);
     let mut response: String = String::new();
     if let Ok(str_json) = json {

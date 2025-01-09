@@ -8,7 +8,7 @@ pub fn run(_options: &[ResolvedOption]) -> Result<String, rusqlite::Error> {
     let select_statement = "SELECT name, points FROM users ORDER BY points DESC";
     let mut stmt = conn.prepare(select_statement)?;
     let mut it = stmt.query_map([], |row| -> Result<(String, i32), rusqlite::Error>  {
-        let name:String  = row.get(0)?;
+        let name:String = row.get(0)?;
         let points: i32 = row.get(1)?;
         return Ok((name, points));
     })?;
@@ -30,7 +30,6 @@ pub fn run(_options: &[ResolvedOption]) -> Result<String, rusqlite::Error> {
             }
         }
     }
-
     return Ok(leaderboard);
 }
 
